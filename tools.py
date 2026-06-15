@@ -56,7 +56,7 @@ def lookup_plant(plant_name: str) -> dict:
     if not normalized:
         return {
             "found": False,
-            "name": normalized,
+            "name": plant_name,
             "message": "No plant name was given.",
         }
     ##check if plant_name recieved was root name   
@@ -68,8 +68,9 @@ def lookup_plant(plant_name: str) -> dict:
                 "plant": _plant_db[root_name]
             } 
         else: 
+            science_name = _plant_db[root_name]["scientific_name"]
             aliases = _plant_db[root_name]["aliases"]
-            if normalized in aliases:
+            if normalized in aliases or normalized.capitalize() == science_name:
                 return {
                 "found": True,
                 "plant": _plant_db[root_name]
@@ -77,8 +78,8 @@ def lookup_plant(plant_name: str) -> dict:
                 
     return {
         "found": False,
-        "name": normalized,
-        "message": f"Could not find infomation for {normalized}",
+        "name": plant_name,
+        "message": f"Could not find infomation for {plant_name}",
     }
     
 
@@ -108,3 +109,5 @@ def get_seasonal_conditions(season: str | None = None) -> dict:
     result = dict(_season_data[season_key])
     result["detected_season"] = detected
     return result
+
+print(lookup_plant("Golden Pothos"))

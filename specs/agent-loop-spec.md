@@ -130,6 +130,15 @@ for tool_call in assistant_message.tool_calls:
 
 ```
 [your answer here]
+
+outer while not done: 
+if response.tool_calls: 
+    continue functions
+else: 
+    done = True
+if iterations > MAX_Iterations: 
+    break 
+
 ```
 
 ---

@@ -132,4 +132,39 @@ def run_agent(user_message: str, history: list) -> str:
 
     Before writing code, complete specs/agent-loop-spec.md.
     """
-    return "🌱 Agent not yet implemented. Complete Milestone 2 to activate the Plant Advisor."
+
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    for msg in history:
+        messages.append({"role": msg["role"], "content": msg["content"]})
+    messages.append({"role": "user", "content": user_message})
+    response = _client.chat.completions.create(
+        model = LLM_MODEL,
+        messages=messages,
+        tools=TOOL_DEFINITIONS,
+        tool_choice="auto", 
+    )
+
+    assistant_message = response.choices[0].message
+
+    if not assistant_message.tool_calls:
+        return response.choices[0].message.content
+    else: 
+        messages.append({"role:" "system", "content": assistant_message})
+        for i in range(MAX_TOOL_ROUNDS):
+            response = _client.chat.completions.create(
+                model = LLM_MODEL,
+                messages=messages,
+                tools=TOOL_DEFINITIONS,
+                tool_choice="auto", 
+            )
+            if response.tool_calls:
+                for call in response.tool_calls:
+                    result = dispatch_tool()
+                    messages.append(
+                        tool_result(call, result)
+                    )
+            else:
+                break
+
+
+    return response.choices[0].message.content
