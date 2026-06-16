@@ -19,6 +19,15 @@ _MONTH_TO_SEASON = {
     9: "fall",  10: "fall",  11: "fall",
 }
 
+def create_dict(): 
+    plant_dict = {}
+    for root_name in _plant_db:
+        common_names = _plant_db[root_name]["aliases"] + [_plant_db[root_name]["scientific_name"].lower()] + [_plant_db[root_name]["display_name"].lower()]
+        common_names.append(root_name)
+        plant_dict[root_name] = common_names
+    return plant_dict
+
+_PLANT_LOOKUP_CACHE = create_dict()
 
 def lookup_plant(plant_name: str) -> dict:
     """
@@ -53,6 +62,7 @@ def lookup_plant(plant_name: str) -> dict:
     Before writing code, complete the lookup_plant section of specs/tool-functions-spec.md.
     """
     normalized = plant_name.strip().lower()
+
     if not normalized:
         return {
             "found": False,
@@ -61,21 +71,15 @@ def lookup_plant(plant_name: str) -> dict:
         }
     ##check if plant_name recieved was root name   
     ##Move on to check if plant_name was an alias 
-    for root_name in _plant_db:
-        if normalized == root_name:
+
+   
+    
+    for key, val in _PLANT_LOOKUP_CACHE.items():
+        if normalized in val:
             return {
-                "found": True,
-                "plant": _plant_db[root_name]
-            } 
-        else: 
-            science_name = _plant_db[root_name]["scientific_name"]
-            aliases = _plant_db[root_name]["aliases"]
-            if normalized in aliases or normalized.capitalize() == science_name:
-                return {
-                "found": True,
-                "plant": _plant_db[root_name]
-            } 
-                
+                "found": True, 
+                "plant": _plant_db[key] 
+            }
     return {
         "found": False,
         "name": plant_name,

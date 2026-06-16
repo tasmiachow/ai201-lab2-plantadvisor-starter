@@ -135,8 +135,10 @@ def run_agent(user_message: str, history: list) -> str:
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     for msg in history:
-        messages.append({"role": msg["role"], "content": msg["content"]})
+        messages.append({"role": "user", "content": msg[0]})
+        messages.append({"role": "assistant", "content": msg[1]})
     messages.append({"role": "user", "content": user_message})
+
     response = _client.chat.completions.create(
         model = LLM_MODEL,
         messages=messages,
@@ -145,26 +147,33 @@ def run_agent(user_message: str, history: list) -> str:
     )
 
     assistant_message = response.choices[0].message
-
+    messages.append(assistant_message)
     if not assistant_message.tool_calls:
         return response.choices[0].message.content
     else: 
-        messages.append({"role:" "system", "content": assistant_message})
+        # append assistant_message to messages 
+
         for i in range(MAX_TOOL_ROUNDS):
-            response = _client.chat.completions.create(
-                model = LLM_MODEL,
-                messages=messages,
-                tools=TOOL_DEFINITIONS,
-                tool_choice="auto", 
-            )
-            if response.tool_calls:
-                for call in response.tool_calls:
-                    result = dispatch_tool()
-                    messages.append(
-                        tool_result(call, result)
-                    )
-            else:
+            if not assistant_message.tool_calls:
                 break
 
+            for call in assistant_message.tool_calls:
+                result = dispatch_tool(call.function.name, json.loads(call.function.arguments))
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": call.id,
+                        "name": call.function.name,
+                        "content": result
+                    })
+            response = _client.chat.completions.create(
+                        model = LLM_MODEL,
+                        messages=messages,
+                        tools=TOOL_DEFINITIONS,
+                        tool_choice="auto", 
+            )
+            assistant_message = response.choices[0].message
+            messages.append(assistant_message)
+            
 
-    return response.choices[0].message.content
+    return assistant_message.content
